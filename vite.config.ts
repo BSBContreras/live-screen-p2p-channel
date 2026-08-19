@@ -4,6 +4,15 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter()],
+  server: {
+    allowedHosts: [".ngrok-free.app"],
+    proxy: {
+      "/signal": {
+        target: "ws://localhost:3001",
+        ws: true,
+      },
+    },
+  },
   resolve: {
     tsconfigPaths: true,
   },

@@ -1,15 +1,67 @@
 @import "tailwindcss";
-
-@theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-}
-
-html,
-body {
-  @apply bg-white dark:bg-gray-950;
-
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
+@theme { --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif; }
+:root { color: #17211b; background: #f6f7f2; font-family: var(--font-sans); font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, a { font: inherit; }
+button { cursor: pointer; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: #17211b; font-size: 18px; font-weight: 750; text-decoration: none; letter-spacing: -.04em; }
+.brand-mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; color: #fff; background: #1d5b3d; font-size: 16px; }
+.eyebrow { display: inline-block; color: #2c7552; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.primary-button, .danger-button { border: 0; border-radius: 10px; padding: 13px 18px; color: #fff; background: #1d5b3d; font-weight: 700; box-shadow: 0 6px 18px #1d5b3d2b; transition: transform .15s, background .15s; }
+.primary-button:hover { background: #164a31; transform: translateY(-1px); }
+.primary-button span { margin-left: 12px; }
+.danger-button { background: #a33b34; box-shadow: 0 6px 18px #a33b3428; }
+.home-page { min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(circle at 85% 20%, #dbe8d8 0, transparent 28%), #f6f7f2; }
+.hero { width: min(1120px, calc(100% - 48px)); flex: 1; margin: auto; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; gap: 30px 80px; align-items: center; padding: 42px 0; }
+.hero > .brand { grid-column: 1 / -1; align-self: start; }
+.hero-copy h1 { margin: 20px 0 18px; font-size: clamp(48px, 6vw, 76px); line-height: .98; letter-spacing: -.065em; font-weight: 720; }
+.hero-copy h1 em { color: #2d7652; font-family: Georgia, serif; font-weight: 500; }
+.hero-copy p { max-width: 520px; color: #667069; font-size: 17px; line-height: 1.7; }
+.hero-copy .primary-button { margin: 16px 0; padding: 15px 22px; }
+.hero-copy small { display: block; color: #89918b; font-size: 11px; }
+.preview-card { position: relative; border: 1px solid #ccd6cc; border-radius: 18px; padding: 10px; background: #fff; box-shadow: 0 30px 70px #31523d22; transform: rotate(1.5deg); }
+.preview-bar { height: 34px; display: flex; align-items: center; gap: 6px; padding: 0 8px; }
+.preview-bar i { width: 7px; height: 7px; border-radius: 50%; background: #ccd2cc; }
+.preview-bar span { margin-left: 14px; color: #9aa19b; font-size: 9px; }
+.preview-screen { height: 330px; border-radius: 11px; display: grid; place-items: center; position: relative; overflow: hidden; background: linear-gradient(145deg, #254f38, #102b1e); }
+.preview-window { width: 62%; height: 56%; border: 8px solid #f6f7f2; border-top-width: 28px; border-radius: 5px; display: flex; gap: 9px; padding: 22px; }
+.preview-window b { flex: 1; background: #5c876c; border-radius: 2px; }
+.preview-cursor { position: absolute; font-size: 34px; color: white; transform: translate(70px, 42px); }
+.preview-live { position: absolute; right: 26px; bottom: 24px; border-radius: 6px; padding: 7px 10px; color: #fff; background: #d95448; font-size: 9px; font-weight: 800; }
+.preview-live span { display: inline-block; width: 5px; height: 5px; margin-right: 5px; border-radius: 50%; background: white; }
+.home-page footer { display: flex; justify-content: center; gap: 60px; padding: 22px; border-top: 1px solid #e0e4de; color: #818a83; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.room-page { min-height: 100vh; background: #f6f7f2; }
+.room-header { height: 72px; padding: 0 max(24px, calc((100% - 1120px)/2)); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #dde3dc; background: #fafbf8; }
+.status-pill { display: flex; align-items: center; gap: 8px; border: 1px solid #d7ddd6; border-radius: 99px; padding: 7px 11px; background: #fff; color: #5f6861; font-size: 11px; font-weight: 700; }
+.status-pill span { width: 7px; height: 7px; border-radius: 50%; background: #d09838; }
+.status-connected span, .status-sharing span { background: #3e9768; box-shadow: 0 0 0 3px #3e97681a; }
+.status-error span, .status-disconnected span { background: #c84940; }
+.room-content { width: min(1120px, calc(100% - 48px)); margin: auto; padding: 45px 0 60px; }
+.room-heading { display: flex; justify-content: space-between; align-items: end; gap: 30px; margin-bottom: 28px; }
+.room-heading h1 { margin: 8px 0; font-size: clamp(28px, 4vw, 40px); letter-spacing: -.045em; }
+.room-heading p, .invite-card p { margin: 0; color: #7a847c; font-size: 13px; }
+.error-message { margin-bottom: 18px; border: 1px solid #e6b5b0; border-radius: 9px; padding: 11px 14px; color: #8a302b; background: #fff0ed; font-size: 13px; }
+.video-shell { min-height: 500px; position: relative; display: grid; place-items: center; overflow: hidden; border: 1px solid #23362a; border-radius: 15px; background: #122219; box-shadow: 0 18px 45px #253e2d22; }
+.video-shell video { width: 100%; height: 100%; max-height: 660px; object-fit: contain; background: #0c1710; }
+.empty-video { text-align: center; color: #fff; }
+.empty-video .screen-icon { width: 64px; height: 48px; display: grid; place-items: center; margin: 0 auto 20px; border: 1px solid #456451; border-radius: 8px; color: #7cab8c; font-size: 24px; }
+.empty-video h2 { margin: 0 0 8px; font-size: 18px; }
+.empty-video p { margin: 0; color: #789080; font-size: 12px; }
+.local-badge { position: absolute; left: 16px; top: 16px; padding: 6px 8px; border-radius: 5px; color: #fff; background: #1b2c21cc; font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+.invite-card { margin-top: 18px; padding: 18px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 1px solid #dce2db; border-radius: 12px; background: #fff; }
+.invite-card > div:first-child { display: flex; align-items: center; gap: 13px; }
+.invite-card b { display: block; margin-bottom: 4px; font-size: 13px; }
+.invite-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; color: #2b7250; background: #e7f0e8; }
+.link-field { min-width: 410px; display: flex; align-items: center; border: 1px solid #d9ded8; border-radius: 8px; overflow: hidden; background: #f8faf7; }
+.link-field span { flex: 1; min-width: 0; padding: 10px 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #657068; font: 11px monospace; }
+.link-field button { align-self: stretch; border: 0; border-left: 1px solid #d9ded8; padding: 0 14px; color: #245f43; background: #fff; font-size: 11px; font-weight: 750; }
+@media (max-width: 800px) {
+  .hero { grid-template-columns: 1fr; padding: 28px 0 45px; }
+  .hero-copy h1 { font-size: 50px; }
+  .preview-screen { height: 240px; }
+  .home-page footer { flex-wrap: wrap; gap: 15px 30px; }
+  .room-heading, .invite-card { align-items: stretch; flex-direction: column; }
+  .link-field { min-width: 0; width: 100%; }
+  .video-shell { min-height: 330px; }
 }
