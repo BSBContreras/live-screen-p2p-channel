@@ -5,6 +5,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
+    "share": "node scripts/share.mjs",
     "server:dev": "yarn --cwd server dev",
     "server:start": "yarn --cwd server start",
     "start": "react-router-serve ./build/server/index.js",
