@@ -5,6 +5,28 @@ const RTC_CONFIG: RTCConfiguration = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
+type AudioAwareDisplayMediaOptions = DisplayMediaStreamOptions & {
+  systemAudio?: "include" | "exclude";
+  windowAudio?: "exclude" | "window" | "system";
+};
+
+const DISPLAY_MEDIA_OPTIONS: AudioAwareDisplayMediaOptions = {
+  video: { displaySurface: "window" },
+  audio: true,
+  systemAudio: "exclude",
+  windowAudio: "window",
+};
+
+function removeUnsafeSystemAudio(stream: MediaStream) {
+  const displaySurface = stream.getVideoTracks()[0]?.getSettings().displaySurface;
+  if (displaySurface !== "monitor") return;
+
+  stream.getAudioTracks().forEach((track) => {
+    track.stop();
+    stream.removeTrack(track);
+  });
+}
+
 export type ConnectionStatus = "connecting" | "waiting" | "sharing" | "connected" | "disconnected" | "error";
 
 export function useWebRTC(roomId: string) {
@@ -193,7 +215,8 @@ export function useWebRTC(roomId: string) {
       return;
     }
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getDisplayMedia(DISPLAY_MEDIA_OPTIONS);
+      removeUnsafeSystemAudio(stream);
       localRef.current = stream;
       setLocalStream(stream);
       setBroadcasterPresent(true);
