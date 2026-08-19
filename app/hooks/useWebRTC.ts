@@ -34,9 +34,9 @@ export function useWebRTC(roomId: string) {
     peer.onicecandidate = ({ candidate }) => {
       if (candidate) sendSignal(socketRef.current, { type: "ice-candidate", roomId, candidate: candidate.toJSON() });
     };
-    peer.ontrack = ({ streams }) => {
-      const stream = streams[0];
-      if (stream) setRemoteStream(stream);
+    peer.ontrack = ({ streams, track }) => {
+      const stream = streams[0] ?? new MediaStream([track]);
+      setRemoteStream(stream);
       setStatus("connected");
     };
     peer.onconnectionstatechange = () => {
@@ -56,17 +56,19 @@ export function useWebRTC(roomId: string) {
   }, [createPeer, roomId]);
 
   useEffect(() => {
-    const socket = createRoomSocket(roomId);
-    socketRef.current = socket;
-    socket.onopen = () => setStatus("waiting");
-    socket.onerror = () => {
-      setError("Não foi possível conectar ao servidor de signaling.");
-      setStatus("error");
-    };
-    socket.onclose = () => {
-      if (socketRef.current === socket) setStatus("disconnected");
-    };
-    socket.onmessage = (event) => {
+    let socket: WebSocket | null = null;
+    const connectTimer = window.setTimeout(() => {
+      socket = createRoomSocket(roomId);
+      socketRef.current = socket;
+      socket.onopen = () => setStatus("waiting");
+      socket.onerror = () => {
+        setError("Não foi possível conectar ao servidor de signaling.");
+        setStatus("error");
+      };
+      socket.onclose = () => {
+        if (socketRef.current === socket) setStatus("disconnected");
+      };
+      socket.onmessage = (event) => {
       const message = parseServerMessage(String(event.data));
       if (!message) return;
       signalQueue.current = signalQueue.current.then(async () => {
@@ -77,6 +79,7 @@ export function useWebRTC(roomId: string) {
           setError(message.message);
         } else if (message.type === "peer-joined") {
           peerPresentRef.current = true;
+          setError(null);
           setStatus(localRef.current ? "sharing" : "waiting");
           await makeOffer();
         } else if (message.type === "peer-left") {
@@ -109,11 +112,13 @@ export function useWebRTC(roomId: string) {
         setError("A negociação da conexão falhou. Tente entrar novamente na sala.");
         setStatus("error");
       });
-    };
+      };
+    }, 0);
 
     return () => {
-      socketRef.current = null;
-      socket.close();
+      window.clearTimeout(connectTimer);
+      if (socketRef.current === socket) socketRef.current = null;
+      socket?.close();
       closePeer();
       localRef.current?.getTracks().forEach((track) => track.stop());
       localRef.current = null;

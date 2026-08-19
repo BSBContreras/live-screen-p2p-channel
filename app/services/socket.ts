@@ -8,7 +8,7 @@ export type ServerMessage =
   | { type: "error"; message: string };
 
 export type ClientMessage =
-  | { type: "join-room"; roomId: string }
+  | { type: "join-room"; roomId: string; clientId: string }
   | { type: "sharing-stopped"; roomId: string }
   | { type: "offer" | "answer"; roomId: string; sdp: RTCSessionDescriptionInit }
   | { type: "ice-candidate"; roomId: string; candidate: RTCIceCandidateInit };
@@ -23,7 +23,13 @@ function getWebSocketUrl() {
 export function createRoomSocket(roomId: string) {
   const socket = new WebSocket(getWebSocketUrl());
   socket.addEventListener("open", () => {
-    socket.send(JSON.stringify({ type: "join-room", roomId } satisfies ClientMessage));
+    const storageKey = "telalink-client-id";
+    let clientId = sessionStorage.getItem(storageKey);
+    if (!clientId) {
+      clientId = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
+      sessionStorage.setItem(storageKey, clientId);
+    }
+    socket.send(JSON.stringify({ type: "join-room", roomId, clientId } satisfies ClientMessage));
   });
   return socket;
 }

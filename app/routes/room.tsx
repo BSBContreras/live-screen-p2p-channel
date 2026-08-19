@@ -21,11 +21,29 @@ export default function Room({ params }: Route.ComponentProps) {
   const { status, error, localStream, remoteStream, startSharing, stopSharing } = useWebRTC(roomId);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [copied, setCopied] = useState(false);
+  const [roomUrl, setRoomUrl] = useState(roomId);
+  const [playbackBlocked, setPlaybackBlocked] = useState(false);
   const visibleStream = remoteStream ?? localStream;
 
+  useEffect(() => setRoomUrl(window.location.href), []);
+
   useEffect(() => {
-    if (videoRef.current) videoRef.current.srcObject = visibleStream;
+    const video = videoRef.current;
+    if (!video || !visibleStream) return;
+    video.srcObject = visibleStream;
+    void video.play()
+      .then(() => setPlaybackBlocked(false))
+      .catch(() => setPlaybackBlocked(true));
   }, [visibleStream]);
+
+  async function resumePlayback() {
+    try {
+      await videoRef.current?.play();
+      setPlaybackBlocked(false);
+    } catch {
+      setPlaybackBlocked(true);
+    }
+  }
 
   async function copyLink() {
     await navigator.clipboard.writeText(window.location.href);
@@ -61,11 +79,16 @@ export default function Room({ params }: Route.ComponentProps) {
             <div className="empty-video"><div className="screen-icon">▣</div><h2>A tela compartilhada aparecerá aqui</h2><p>{status === "waiting" ? "Aguardando alguém iniciar o compartilhamento." : "Preparando a conexão segura…"}</p></div>
           )}
           {localStream && !remoteStream && <span className="local-badge">SUA TELA</span>}
+          {remoteStream && playbackBlocked && (
+            <button className="playback-button" type="button" onClick={resumePlayback}>
+              <span aria-hidden="true">▶</span> Reproduzir transmissão
+            </button>
+          )}
         </div>
 
         <div className="invite-card">
           <div><span className="invite-icon">↗</span><div><b>Convide alguém para esta sala</b><p>Compartilhe o link abaixo. A sala suporta duas pessoas neste MVP.</p></div></div>
-          <div className="link-field"><span>{typeof window !== "undefined" ? window.location.href : roomId}</span><button type="button" onClick={copyLink}>{copied ? "Copiado!" : "Copiar link"}</button></div>
+          <div className="link-field"><span>{roomUrl}</span><button type="button" onClick={copyLink}>{copied ? "Copiado!" : "Copiar link"}</button></div>
         </div>
       </section>
     </main>
