@@ -18,7 +18,7 @@ export function meta() {
 
 export default function Room({ params }: Route.ComponentProps) {
   const { roomId } = params;
-  const { status, error, localStream, remoteStream, startSharing, stopSharing } = useWebRTC(roomId);
+  const { status, error, localStream, remoteStream, viewerCount, broadcasterPresent, startSharing, stopSharing } = useWebRTC(roomId);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [copied, setCopied] = useState(false);
   const [roomUrl, setRoomUrl] = useState(roomId);
@@ -60,13 +60,13 @@ export default function Room({ params }: Route.ComponentProps) {
 
       <section className="room-content">
         <div className="room-heading">
-          <div><span className="eyebrow">SALA ATIVA</span><h1>Sua sala de compartilhamento</h1><p>Convide uma pessoa e comece a apresentar quando estiver pronto.</p></div>
+          <div><span className="eyebrow">SALA ATIVA</span><h1>Sua sala de compartilhamento</h1><p>Uma pessoa apresenta e várias podem assistir ao mesmo tempo.</p></div>
           <div className="room-actions">
             {localStream ? (
               <button className="danger-button" type="button" onClick={stopSharing}>Parar compartilhamento</button>
-            ) : (
+            ) : !broadcasterPresent ? (
               <button className="primary-button" type="button" onClick={startSharing}>Compartilhar tela <span>▣</span></button>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -79,6 +79,7 @@ export default function Room({ params }: Route.ComponentProps) {
             <div className="empty-video"><div className="screen-icon">▣</div><h2>A tela compartilhada aparecerá aqui</h2><p>{status === "waiting" ? "Aguardando alguém iniciar o compartilhamento." : "Preparando a conexão segura…"}</p></div>
           )}
           {localStream && !remoteStream && <span className="local-badge">SUA TELA</span>}
+          {localStream && <span className="viewer-count">{viewerCount} {viewerCount === 1 ? "espectador" : "espectadores"}</span>}
           {remoteStream && playbackBlocked && (
             <button className="playback-button" type="button" onClick={resumePlayback}>
               <span aria-hidden="true">▶</span> Reproduzir transmissão
@@ -87,7 +88,7 @@ export default function Room({ params }: Route.ComponentProps) {
         </div>
 
         <div className="invite-card">
-          <div><span className="invite-icon">↗</span><div><b>Convide alguém para esta sala</b><p>Compartilhe o link abaixo. A sala suporta duas pessoas neste MVP.</p></div></div>
+          <div><span className="invite-icon">↗</span><div><b>Convide pessoas para esta sala</b><p>Compartilhe o link abaixo. Uma pessoa transmite e múltiplas pessoas podem assistir.</p></div></div>
           <div className="link-field"><span>{roomUrl}</span><button type="button" onClick={copyLink}>{copied ? "Copiado!" : "Copiar link"}</button></div>
         </div>
       </section>

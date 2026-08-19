@@ -1,6 +1,6 @@
 # TelaLink
 
-MVP de compartilhamento de tela em tempo real com React Router, WebRTC nativo e um servidor WebSocket usado exclusivamente para signaling.
+Compartilhamento de tela em tempo real para um transmissor e múltiplos espectadores, com React Router, WebRTC nativo e um servidor WebSocket usado exclusivamente para signaling.
 
 ## Desenvolvimento
 
@@ -25,11 +25,13 @@ Para usar outro endereço de signaling, copie `.env.example` para `.env` e defin
 ## Como testar
 
 1. Abra o frontend e clique em **Criar sala**.
-2. Copie o link e abra-o em outra janela ou navegador.
+2. Copie o link e abra-o em duas ou mais janelas ou navegadores.
 3. Clique em **Compartilhar tela** em uma das janelas.
 4. Escolha uma tela ou janela no seletor do navegador.
 
-O vídeo e o áudio disponível trafegam diretamente entre os dois navegadores por WebRTC. O servidor WebSocket retransmite somente ofertas, respostas, candidatos ICE e eventos da sala.
+O vídeo e o áudio disponível trafegam diretamente do transmissor para cada espectador por WebRTC. O servidor WebSocket elege um único transmissor e encaminha somente ofertas, respostas, candidatos ICE e eventos da sala para os destinatários corretos.
+
+Como cada espectador recebe uma conexão WebRTC própria, não há um limite fixo de participantes no servidor, mas a quantidade prática depende da banda de upload e da capacidade do dispositivo de quem compartilha. Para transmissões muito grandes, use uma SFU.
 
 ## Verificações
 
