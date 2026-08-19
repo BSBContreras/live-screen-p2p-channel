@@ -16,7 +16,7 @@ const labels: Record<ConnectionStatus, string> = {
 };
 
 export function meta() {
-  return [{ title: "Sala de compartilhamento — TelaLink" }];
+  return [{ title: "Sala de compartilhamento — Voyeur" }];
 }
 
 function initials(name: string) {
@@ -138,23 +138,24 @@ function ActiveRoom({ roomId, userName }: { roomId: string; userName: string }) 
   return (
     <main className="room-page">
       <header className="room-header">
-        <Link className="brand" to="/"><span className="brand-mark">T</span>TelaLink</Link>
+        <Link className="brand" to="/"><span className="brand-mark">V</span><span>VOYEUR</span></Link>
+        <span className="room-header-meta">LIVE SCREEN / P2P CHANNEL</span>
         <div className={`status-pill status-${status}`}><span />{labels[status]}</div>
       </header>
 
       <section className="room-content">
         <div className="room-heading">
           <div>
-            <span className="eyebrow">SALA ATIVA · {participantCount}/8 PARTICIPANTES</span>
-            <h1>Compartilhamentos da sala</h1>
+            <span className="eyebrow">01 / SALA ATIVA · {participantCount}/8 PARTICIPANTES</span>
+            <h1>TRANSMISSÕES<br /><em>DA SALA</em></h1>
             <p>Qualquer participante pode compartilhar sua tela ao mesmo tempo.</p>
           </div>
           <div className="room-actions">
             {localStream ? (
-              <button className="danger-button" type="button" onClick={stopSharing}>Parar compartilhamento</button>
+              <button className="danger-button" type="button" onClick={stopSharing}>PARAR TRANSMISSÃO</button>
             ) : (
               <button className="primary-button" type="button" onClick={startSharing} disabled={status === "connecting" || status === "disconnected"}>
-                Compartilhar tela <span>▣</span>
+                COMPARTILHAR TELA <span>↗</span>
               </button>
             )}
           </div>
@@ -166,8 +167,9 @@ function ActiveRoom({ roomId, userName }: { roomId: string; userName: string }) 
           <section className={`share-grid ${shares.length === 1 ? "single-share" : ""}`} aria-label="Telas compartilhadas">
             {shares.length ? shares.map((share) => <ShareTile key={share.shareId} share={share} />) : (
               <div className="empty-grid">
-                <div className="screen-icon">▣</div>
-                <h2>Nenhuma tela compartilhada</h2>
+                <div className="screen-icon"><i /></div>
+                <span className="empty-code">NO SIGNAL / 00</span>
+                <h2>NENHUMA TELA<br />COMPARTILHADA</h2>
                 <p>Use “Compartilhar tela” para iniciar ou aguarde outro participante.</p>
               </div>
             )}
@@ -175,7 +177,7 @@ function ActiveRoom({ roomId, userName }: { roomId: string; userName: string }) 
 
           <aside className="participants-panel">
             <div className="participants-heading">
-              <div><span className="online-dot" /><strong>Na sala</strong></div>
+              <div><span className="online-dot" /><strong>NA SALA</strong></div>
               <span>{waitingParticipants.length}</span>
             </div>
             <p className="participants-description">Participantes que não estão compartilhando.</p>
@@ -192,7 +194,7 @@ function ActiveRoom({ roomId, userName }: { roomId: string; userName: string }) 
         </div>
 
         <div className="invite-card">
-          <div><span className="invite-icon">↗</span><div><b>Convide pessoas para esta sala</b><p>Até oito pessoas podem entrar e compartilhar simultaneamente.</p></div></div>
+          <div><span className="invite-icon">02</span><div><b>CONVIDE PESSOAS PARA ESTA SALA</b><p>Até oito pessoas podem entrar e compartilhar simultaneamente.</p></div></div>
           <div className="link-field"><span>{roomUrl}</span><button type="button" onClick={copyLink}>{copied ? "Copiado!" : "Copiar link"}</button></div>
         </div>
       </section>
@@ -229,18 +231,19 @@ export default function Room({ params }: Route.ComponentProps) {
   return (
     <main className="room-page room-locked">
       <header className="room-header">
-        <Link className="brand" to="/"><span className="brand-mark">T</span>TelaLink</Link>
+        <Link className="brand" to="/"><span className="brand-mark">V</span><span>VOYEUR</span></Link>
+        <span className="room-header-meta">PRIVATE ACCESS / INVITED ONLY</span>
         <div className="status-pill"><span />Aguardando entrada</div>
       </header>
       <section className="room-content locked-content" aria-hidden="true">
-        <div className="room-heading"><div><span className="eyebrow">SALA</span><h1>Compartilhamentos da sala</h1><p>Entre para ver quem está compartilhando.</p></div></div>
-        <div className="locked-preview"><div className="screen-icon">▣</div></div>
+        <div className="room-heading"><div><span className="eyebrow">01 / SALA</span><h1>TRANSMISSÕES<br /><em>DA SALA</em></h1><p>Entre para ver quem está compartilhando.</p></div></div>
+        <div className="locked-preview"><div className="screen-icon"><i /></div></div>
       </section>
       <div className="join-backdrop">
         <form className="join-dialog" onSubmit={enterRoom} role="dialog" aria-modal="true" aria-labelledby="join-title">
-          <span className="brand-mark">T</span>
-          <span className="eyebrow">ENTRAR NA SALA</span>
-          <h1 id="join-title">Como devemos chamar você?</h1>
+          <div className="join-brand"><span className="brand-mark">V</span><span>VOYEUR / ACCESS</span></div>
+          <span className="eyebrow">01 / ENTRAR NA SALA</span>
+          <h1 id="join-title">COMO DEVEMOS<br /><em>CHAMAR VOCÊ?</em></h1>
           <p>Seu nome ficará visível para as outras pessoas desta sala.</p>
           <label htmlFor="participant-name">Seu nome</label>
           <input
@@ -255,7 +258,7 @@ export default function Room({ params }: Route.ComponentProps) {
             aria-describedby={nameError ? "name-error" : undefined}
           />
           {nameError && <span className="field-error" id="name-error" role="alert">{nameError}</span>}
-          <button className="primary-button" type="submit">Entrar na sala <span>→</span></button>
+          <button className="primary-button" type="submit">ENTRAR NA SALA <span>→</span></button>
           <small>Até 8 participantes · conexão direta entre navegadores</small>
         </form>
       </div>

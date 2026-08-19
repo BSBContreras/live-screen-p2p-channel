@@ -1,4 +1,4 @@
-# TelaLink
+# Voyeur
 
 Compartilhamento de tela em tempo real para salas com até oito participantes, onde qualquer pessoa pode transmitir simultaneamente, usando React Router, WebRTC nativo e um servidor WebSocket exclusivamente para signaling.
 
