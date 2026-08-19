@@ -20,12 +20,24 @@ export default function Room({ params }: Route.ComponentProps) {
   const { roomId } = params;
   const { status, error, localStream, remoteStream, viewerCount, broadcasterPresent, startSharing, stopSharing } = useWebRTC(roomId);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const videoShellRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const [roomUrl, setRoomUrl] = useState(roomId);
   const [playbackBlocked, setPlaybackBlocked] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenError, setFullscreenError] = useState<string | null>(null);
   const visibleStream = remoteStream ?? localStream;
 
   useEffect(() => setRoomUrl(window.location.href), []);
+
+  useEffect(() => {
+    function syncFullscreenState() {
+      setIsFullscreen(document.fullscreenElement === videoShellRef.current);
+    }
+
+    document.addEventListener("fullscreenchange", syncFullscreenState);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreenState);
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -51,6 +63,19 @@ export default function Room({ params }: Route.ComponentProps) {
     window.setTimeout(() => setCopied(false), 1800);
   }
 
+  async function toggleFullscreen() {
+    setFullscreenError(null);
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await videoShellRef.current?.requestFullscreen();
+      }
+    } catch {
+      setFullscreenError("Não foi possível abrir a transmissão em tela cheia.");
+    }
+  }
+
   return (
     <main className="room-page">
       <header className="room-header">
@@ -70,9 +95,9 @@ export default function Room({ params }: Route.ComponentProps) {
           </div>
         </div>
 
-        {error && <div className="error-message" role="alert">{error}</div>}
+        {(error || fullscreenError) && <div className="error-message" role="alert">{error ?? fullscreenError}</div>}
 
-        <div className="video-shell">
+        <div className="video-shell" ref={videoShellRef}>
           {visibleStream ? (
             <video ref={videoRef} autoPlay playsInline muted={Boolean(localStream && !remoteStream)} />
           ) : (
@@ -80,6 +105,18 @@ export default function Room({ params }: Route.ComponentProps) {
           )}
           {localStream && !remoteStream && <span className="local-badge">SUA TELA</span>}
           {localStream && <span className="viewer-count">{viewerCount} {viewerCount === 1 ? "espectador" : "espectadores"}</span>}
+          {visibleStream && (
+            <button
+              className="fullscreen-button"
+              type="button"
+              onClick={toggleFullscreen}
+              aria-label={isFullscreen ? "Sair da tela cheia" : "Abrir em tela cheia"}
+              title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+            >
+              <span aria-hidden="true">{isFullscreen ? "×" : "⛶"}</span>
+              {isFullscreen ? "Sair" : "Tela cheia"}
+            </button>
+          )}
           {remoteStream && playbackBlocked && (
             <button className="playback-button" type="button" onClick={resumePlayback}>
               <span aria-hidden="true">▶</span> Reproduzir transmissão
