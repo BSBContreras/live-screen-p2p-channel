@@ -99,7 +99,7 @@ export default function Room({ params }: Route.ComponentProps) {
 
         <div className="video-shell" ref={videoShellRef}>
           {visibleStream ? (
-            <video ref={videoRef} autoPlay playsInline muted={Boolean(localStream && !remoteStream)} />
+            <video ref={videoRef} autoPlay playsInline muted={Boolean(localStream)} />
           ) : (
             <div className="empty-video"><div className="screen-icon">▣</div><h2>A tela compartilhada aparecerá aqui</h2><p>{status === "waiting" ? "Aguardando alguém iniciar o compartilhamento." : "Preparando a conexão segura…"}</p></div>
           )}
