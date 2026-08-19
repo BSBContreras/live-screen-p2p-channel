@@ -1,6 +1,6 @@
 # TelaLink
 
-Compartilhamento de tela em tempo real para um transmissor e múltiplos espectadores, com React Router, WebRTC nativo e um servidor WebSocket usado exclusivamente para signaling.
+Compartilhamento de tela em tempo real para salas com até oito participantes, onde qualquer pessoa pode transmitir simultaneamente, usando React Router, WebRTC nativo e um servidor WebSocket exclusivamente para signaling.
 
 ## Desenvolvimento
 
@@ -35,13 +35,14 @@ Para usar outro endereço de signaling, copie `.env.example` para `.env` e defin
 ## Como testar
 
 1. Abra o frontend e clique em **Criar sala**.
-2. Copie o link e abra-o em duas ou mais janelas ou navegadores.
-3. Clique em **Compartilhar tela** em uma das janelas.
-4. Escolha uma tela ou janela no seletor do navegador.
+2. Informe um nome para entrar, copie o link e abra-o em outras janelas ou navegadores.
+3. Entre com um nome em cada janela.
+4. Clique em **Compartilhar tela** em duas ou mais janelas.
+5. Escolha uma tela ou janela no seletor de cada navegador.
 
-O vídeo e o áudio disponível trafegam diretamente do transmissor para cada espectador por WebRTC. O servidor WebSocket elege um único transmissor e encaminha somente ofertas, respostas, candidatos ICE e eventos da sala para os destinatários corretos.
+O vídeo e o áudio disponível trafegam diretamente entre os participantes por WebRTC. O servidor WebSocket mantém apenas a presença temporária da sala e encaminha ofertas, respostas, candidatos ICE e eventos aos destinatários corretos. Cada transmissão aparece em um mosaico, com áudio remoto inicialmente silenciado e controle individual.
 
-Como cada espectador recebe uma conexão WebRTC própria, não há um limite fixo de participantes no servidor, mas a quantidade prática depende da banda de upload e da capacidade do dispositivo de quem compartilha. Para transmissões muito grandes, use uma SFU.
+Cada pessoa que compartilha cria uma conexão WebRTC para cada outro participante. Por isso, a sala é limitada a oito pessoas e a capacidade prática ainda depende da banda de upload e do dispositivo de cada transmissor. Para salas maiores, use uma SFU.
 
 ## Verificações
 

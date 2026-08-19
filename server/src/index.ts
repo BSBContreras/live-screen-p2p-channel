@@ -1,8 +1,12 @@
 import { WebSocket, WebSocketServer } from "ws";
 
 const port = Number(process.env.PORT) || 3001;
+const MAX_PARTICIPANTS = 8;
+const MAX_NAME_LENGTH = 50;
+
 type Membership = { roomId: string; clientId: string };
-type Room = { clients: Map<string, WebSocket>; broadcasterId: string | null };
+type Client = { socket: WebSocket; name: string; shareId: string | null };
+type Room = { clients: Map<string, Client> };
 
 const rooms = new Map<string, Room>();
 const memberships = new WeakMap<WebSocket, Membership>();
@@ -17,9 +21,13 @@ function send(socket: WebSocket, payload: object) {
 }
 
 function broadcast(room: Room, payload: object, exceptClientId?: string) {
-  room.clients.forEach((peer, clientId) => {
-    if (clientId !== exceptClientId) send(peer, payload);
+  room.clients.forEach((client, clientId) => {
+    if (clientId !== exceptClientId) send(client.socket, payload);
   });
+}
+
+function participant(id: string, client: Client) {
+  return { id, name: client.name, shareId: client.shareId };
 }
 
 function leave(socket: WebSocket) {
@@ -28,16 +36,14 @@ function leave(socket: WebSocket) {
   const { roomId, clientId } = membership;
   const room = rooms.get(roomId);
   memberships.delete(socket);
-  if (!room || room.clients.get(clientId) !== socket) return;
+  if (!room || room.clients.get(clientId)?.socket !== socket) return;
 
+  const client = room.clients.get(clientId)!;
   room.clients.delete(clientId);
-  if (room.broadcasterId === clientId) {
-    room.broadcasterId = null;
-    broadcast(room, { type: "sharing-stopped", roomId });
-  } else if (room.broadcasterId) {
-    const broadcaster = room.clients.get(room.broadcasterId);
-    if (broadcaster) send(broadcaster, { type: "viewer-left", roomId, peerId: clientId });
+  if (client.shareId) {
+    broadcast(room, { type: "sharing-stopped", roomId, peerId: clientId, shareId: client.shareId });
   }
+  broadcast(room, { type: "participant-left", roomId, peerId: clientId });
   if (!room.clients.size) rooms.delete(roomId);
 }
 
@@ -61,18 +67,40 @@ server.on("connection", (socket) => {
       if (message.type === "join-room") {
         if (memberships.has(socket)) return;
         if (typeof message.clientId !== "string" || !message.clientId || message.clientId.length > 128) return;
+        if (typeof message.userName !== "string") return;
+        const name = message.userName.trim();
+        if (!name || name.length > MAX_NAME_LENGTH) {
+          send(socket, { type: "error", message: `O nome deve ter entre 1 e ${MAX_NAME_LENGTH} caracteres.` });
+          return;
+        }
+
         const clientId = message.clientId;
-        const room = rooms.get(roomId) ?? { clients: new Map<string, WebSocket>(), broadcasterId: null };
-        const previousSocket = room.clients.get(clientId);
-        room.clients.set(clientId, socket);
+        const room = rooms.get(roomId) ?? { clients: new Map<string, Client>() };
+        const previous = room.clients.get(clientId);
+        if (!previous && room.clients.size >= MAX_PARTICIPANTS) {
+          send(socket, { type: "error", message: `Esta sala já atingiu o limite de ${MAX_PARTICIPANTS} participantes.` });
+          return;
+        }
+
+        if (previous) {
+          if (previous.shareId) {
+            broadcast(room, { type: "sharing-stopped", roomId, peerId: clientId, shareId: previous.shareId }, clientId);
+          }
+          broadcast(room, { type: "participant-left", roomId, peerId: clientId }, clientId);
+        }
+
+        const client: Client = { socket, name, shareId: null };
+        room.clients.set(clientId, client);
         rooms.set(roomId, room);
         memberships.set(socket, { roomId, clientId });
-        previousSocket?.close(1000, "Replaced by a newer connection");
-        send(socket, { type: "room-state", roomId, broadcasterId: room.broadcasterId });
-        if (room.broadcasterId && room.broadcasterId !== clientId) {
-          const broadcaster = room.clients.get(room.broadcasterId);
-          if (broadcaster) send(broadcaster, { type: "viewer-joined", roomId, peerId: clientId });
-        }
+        previous?.socket.close(1000, "Replaced by a newer connection");
+
+        send(socket, {
+          type: "room-state",
+          roomId,
+          participants: [...room.clients].map(([id, roomClient]) => participant(id, roomClient)),
+        });
+        broadcast(room, { type: "participant-joined", roomId, participant: participant(clientId, client) }, clientId);
         return;
       }
 
@@ -80,39 +108,40 @@ server.on("connection", (socket) => {
       const room = rooms.get(roomId);
       if (membership?.roomId !== roomId || !room) return;
       const senderId = membership.clientId;
+      const sender = room.clients.get(senderId);
+      if (!sender || sender.socket !== socket) return;
 
       if (message.type === "start-sharing") {
-        if (room.broadcasterId && room.broadcasterId !== senderId) {
-          send(socket, { type: "sharing-unavailable", roomId });
-          return;
-        }
-        room.broadcasterId = senderId;
-        send(socket, { type: "sharing-started", roomId, peerId: senderId });
-        room.clients.forEach((peer, clientId) => {
-          if (clientId === senderId) return;
-          send(peer, { type: "sharing-started", roomId, peerId: senderId });
-          send(socket, { type: "viewer-joined", roomId, peerId: clientId });
-        });
+        if (typeof message.shareId !== "string" || !message.shareId || message.shareId.length > 128) return;
+        if (sender.shareId && sender.shareId !== message.shareId) return;
+        sender.shareId = message.shareId;
+        broadcast(room, { type: "sharing-started", roomId, participant: participant(senderId, sender) });
         return;
       }
 
       if (message.type === "sharing-stopped") {
-        if (room.broadcasterId !== senderId) return;
-        room.broadcasterId = null;
-        broadcast(room, { type: "sharing-stopped", roomId });
+        if (typeof message.shareId !== "string" || sender.shareId !== message.shareId) return;
+        const shareId = sender.shareId;
+        sender.shareId = null;
+        broadcast(room, { type: "sharing-stopped", roomId, peerId: senderId, shareId });
         return;
       }
 
-      if (!directedSignals.has(message.type) || typeof message.targetId !== "string") return;
+      if (!directedSignals.has(message.type) || typeof message.targetId !== "string" || typeof message.shareId !== "string") return;
+      const target = room.clients.get(message.targetId);
+      if (!target || !message.shareId) return;
       if (message.type === "ice-candidate" && !isRecord(message.candidate)) return;
       if ((message.type === "offer" || message.type === "answer") && !isRecord(message.sdp)) return;
-      if (message.type === "offer" && room.broadcasterId !== senderId) return;
-      if (message.type === "answer" && message.targetId !== room.broadcasterId) return;
-      if (message.type === "ice-candidate" && senderId !== room.broadcasterId && message.targetId !== room.broadcasterId) return;
-      const target = room.clients.get(message.targetId);
-      if (!target) return;
+
+      const shareOwner = [...room.clients].find(([, client]) => client.shareId === message.shareId);
+      if (!shareOwner) return;
+      const [ownerId] = shareOwner;
+      if (message.type === "offer" && senderId !== ownerId) return;
+      if (message.type === "answer" && message.targetId !== ownerId) return;
+      if (message.type === "ice-candidate" && senderId !== ownerId && message.targetId !== ownerId) return;
+
       const { targetId: _targetId, ...signal } = message;
-      send(target, { ...signal, roomId, peerId: senderId });
+      send(target.socket, { ...signal, roomId, peerId: senderId });
     } catch {
       // Malformed client messages are intentionally ignored.
     }
