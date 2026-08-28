@@ -5,7 +5,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter()],
   server: {
-    allowedHosts: [".ngrok-free.app"],
+    allowedHosts: [".ngrok-free.app", ".ngrok-free.dev"],
     proxy: {
       "/signal": {
         target: "ws://localhost:3001",
